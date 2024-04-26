@@ -3,7 +3,9 @@ import { expressMiddleware } from '@apollo/server/express4';
 import cors from 'cors'
 import { ApolloServer } from "@apollo/server";
 import { loadFiles } from '@graphql-tools/load-files'
-import { resolvers } from "./resolvers/resolvers";
+import { resolvers as mainResolvers } from "./resolvers/resolvers";
+import { typeDefs as scalarsTypeDefs, resolvers as scalarsResolvers } from 'graphql-scalars';
+
 const app: Express = express()
 const port = process.env.PORT || 3000;
 app.use(cors(), express.json())
@@ -20,7 +22,14 @@ const getContext = async ({req}: {req: Request}) => {
 }
 
 async function startApolloServer() {
-    const typeDefs = await loadFiles('./src/**/*.graphql');
+    const typeDefs = [
+        ...await loadFiles('./src/**/*.graphql'),
+        scalarsTypeDefs
+    ];
+    const resolvers = [
+        mainResolvers,
+        scalarsResolvers
+    ];
     const apolloServer = new ApolloServer<ApolloServerContext>({ typeDefs, resolvers });
     await apolloServer.start();
     app.use('/graphql', expressMiddleware(apolloServer, { context: getContext}));

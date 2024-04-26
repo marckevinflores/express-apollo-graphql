@@ -5,24 +5,18 @@ import gravatar from 'gravatar'
 import { checkJwtGql } from "../../utils/checkJwtGql";
 import { Context } from "../../core/types/core.types";
 import { JwtPayload } from "jsonwebtoken";
-
-interface UserInput {
-    name: string,
-    email: string,
-    password: string
-}
-
+import { UserInput } from "./interface/user.interface";
 
 const prisma = new PrismaClient();
-export async function createUser(
+export const createUser = async (
     _: unknown,
     { input: { name, email, password} }: {input: UserInput}
-): Promise<User>{
+): Promise<User> => {
     const isExists = await prisma.user.findFirst({
         where: { email }
     })
     if (isExists) {
-        throw new GraphQLError('email is already exists', {
+        throw new GraphQLError('Email is already exists', {
             extensions: { code: 'USER_ALREADY_EXISTS' },
         });
     }
@@ -44,7 +38,42 @@ export async function createUser(
     )
     return user;
 }
-export async function user(_root: unknown, _: unknown, context: Context): Promise<User | null> {
+export const updateUser = async (_: unknown,  { input }: {input: UserInput}, context: Context): Promise<User | undefined> => {
+        try {
+            const result = await checkJwtGql(context.token) as JwtPayload;
+            if(result){
+                const foundUser = await prisma.user.findFirst({
+                    where: { id: result.sub }
+                });
+                if(foundUser){
+                    let newPassword: string = foundUser.password;
+                    if(input.password){
+                        newPassword = await hash(input.password, 10);
+                    }
+                    const updateUser = await prisma.user.update({
+                        where: { id: result.sub },
+                        data: {
+                            name: input.name ?? foundUser?.name,
+                            email: input.email ?? foundUser?.email,
+                            avatar: input.avatar ?? foundUser?.avatar,
+                            password: newPassword,
+                        }
+                    })
+                    return updateUser
+                }
+            }else{
+                throw new GraphQLError('Unauthorized', {
+                    extensions: { code: 'UNAUTHORIZED' }
+                });
+            }
+            
+        }catch(error){
+            throw new GraphQLError('Internal Server Error', {
+                    extensions: { code: 'INTERNAL_SERVER_ERROR' }
+            });
+        }
+}
+export const user = async (_root: unknown, _: unknown, context: Context): Promise<User | null> => {
     try {
         const result = await checkJwtGql(context.token) as JwtPayload;
         if (result) {
@@ -58,8 +87,6 @@ export async function user(_root: unknown, _: unknown, context: Context): Promis
             });
         }
     } catch (error) {
-        // Handle errors appropriately
-        console.error('Error fetching user:', error);
         throw new GraphQLError('Internal Server Error', {
             extensions: { code: 'INTERNAL_SERVER_ERROR' }
         });
