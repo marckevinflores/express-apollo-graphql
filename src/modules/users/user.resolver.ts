@@ -6,6 +6,7 @@ import { checkJwtGql } from "../../utils/checkJwtGql";
 import { Context } from "../../core/types/core.types";
 import { JwtPayload } from "jsonwebtoken";
 import { UserInput } from "./interface/user.interface";
+import { config } from "../../core/config";
 
 const prisma = new PrismaClient();
 export const createUser = async (
@@ -20,7 +21,7 @@ export const createUser = async (
             extensions: { code: 'USER_ALREADY_EXISTS' },
         });
     }
-    const hashPassword = await hash(password, 10);
+    const hashPassword = await hash(password, config.passwordSalt);
     const avatar = gravatar.url(email, {
         s: '200',
         r: 'pg',

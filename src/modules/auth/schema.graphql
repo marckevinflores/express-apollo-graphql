@@ -4,6 +4,7 @@ type Query {
 type Mutation {
   login(email: String!, password: String!): AuthPayload
   sendRecovery(email: EmailAddress!): String
+  changePassword(token: String!, userId: String!, newPassword: String!): String
 }
 type AuthPayload {
   token: String!

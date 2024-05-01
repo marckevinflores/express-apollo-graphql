@@ -1,5 +1,5 @@
 import { createUser, user, updateUser } from "../modules/users/user.resolver"
-import { login, sendRecovery } from "../modules/auth/auth.resolver"
+import { login, sendRecovery, changePassword } from "../modules/auth/auth.resolver"
 export const resolvers = {
     Query: {
         user
@@ -8,6 +8,7 @@ export const resolvers = {
         createUser,
         updateUser,
         login,
-        sendRecovery
+        sendRecovery,
+        changePassword
     }
 }

@@ -1,9 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { hash } from 'bcrypt'
+import { config } from "../../src/core/config";
 
 export async function createUsers(prismaClient: PrismaClient){
     const password = 'abc123'
-    const hashpass  = await hash(password, 10);
+    const hashpass  = await hash(password, config.passwordSalt);
     await prismaClient.user.upsert({
         where: {
             email: 'marckevinflores@gmail.com'
